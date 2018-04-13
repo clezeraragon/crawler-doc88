@@ -45,8 +45,9 @@ Route::get('/proinfa', 'AneelController@proInfa')->name('proinfa');
 Route::get('/conta-desenv-energ', 'AneelController@contaDesenvEnerg')->name('conta_desenv_energ');
 
 
-Route::name('ons')->group(function () {
+Route::prefix('ons')->group(function () {
     Route::get('/sdro-semanal', 'OnsController@sdroSemanal')->name('sdro_semanal');
     Route::get('/mlt-enas', 'OnsController@mltEnas')->name('mtl_enas');
+    Route::get('/sdro-diario', 'OnsController@sdroDiario')->name('sdro_diario');
 
 });
