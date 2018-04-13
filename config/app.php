@@ -154,11 +154,12 @@ return [
         /*
          * Application Service Providers...
          */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
+        Crawler\Providers\AppServiceProvider::class,
+        Crawler\Providers\AuthServiceProvider::class,
+        // Crawler\Providers\BroadcastServiceProvider::class,
+        Crawler\Providers\EventServiceProvider::class,
+        Crawler\Providers\RouteServiceProvider::class,
+        Ixudra\Curl\CurlServiceProvider::class,
 
     ],
 
@@ -210,5 +211,8 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
+    'facades'       => array(
+        'Curl'          => 'Ixudra\Curl\Facades\Curl',
+    ),
 
 ];
