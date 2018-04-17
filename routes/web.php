@@ -42,3 +42,7 @@ Route::prefix('ons')->group(function () {
     Route::get('/mlt-enas-semanal', 'OnsController@operacaoEnasSemanal')->name('mlt_enas_semanal');
 
 });
+Route::prefix('ccee')->group(function () {
+    Route::get('/historico-semanal', 'CceeController@historicoPrecoSemanal')->name('historico_semanal');
+
+});

@@ -7,7 +7,7 @@
  */
 
 namespace Crawler\Regex;
-
+use DateTime;
 
 abstract class AbstractRegex
 {
@@ -89,14 +89,22 @@ abstract class AbstractRegex
 
         $data = NULL;
 
-
         $date = DateTime::createFromFormat('d/m/Y H:i', $data_hora);
-        #var_dump($date);
-        # print_r(DateTime::getLastErrors());
-        if ($date) {
 
+        if ($date) {
             $data = $date->format('Y-m-d H:i:s'); # Formata a hora para padrão ISO
-            #echo '<br > teste 2'.$data;
+        }
+
+        return $data;
+    }
+    public function formataDataISO($data_hora) {
+
+        $data = NULL;
+
+        $date = DateTime::createFromFormat('d/m/Y', $data_hora);
+
+        if ($date) {
+            $data = $date->format('Y-m-d');
         }
 
         return $data;
