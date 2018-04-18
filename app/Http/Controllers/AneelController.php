@@ -63,7 +63,7 @@ class AneelController extends Controller
                         ->download('');
                     $this->storageDirectory->saveDirectory('aneel/nota_tecnica',$nota_tecnica[0]['name_arquivo'],$results_download_nota_tecnica);
 
-//                              dump($nota_tecnica);
+                              dump($norma);
 
     }
     public function contaDesenvEnerg()

@@ -46,3 +46,5 @@ Route::prefix('ccee')->group(function () {
     Route::get('/historico-semanal', 'CceeController@historicoPrecoSemanal')->name('historico_semanal');
 
 });
+
+Route::get('/arango', 'ArangoDbController@index')->name('arango');

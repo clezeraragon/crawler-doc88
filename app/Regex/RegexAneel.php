@@ -14,7 +14,7 @@ class RegexAneel extends AbstractRegex
 
     public function capturaNorma($page_acesso)
     {
-        $regex = '/\>Norma[^>]+>[^>]+>[^>]+>[^>]+>([^<]+)+</';
+        $regex = '/\>Norma[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>([^<]+)+</';
         return $this->regexAll($regex, $page_acesso, 0,['norma']);
     }
 

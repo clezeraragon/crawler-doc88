@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "6ba75d265d5aab6f91e55ce33f233472",
+    "content-hash": "3eb884f364a5d366cf6942bf3abcf21d",
     "packages": [
         {
             "name": "dnoegel/php-xdg-base-dir",
@@ -2623,6 +2623,63 @@
             "description": "CssToInlineStyles is a class that enables you to convert HTML-pages/files into HTML-pages/files with inline styles. This is very useful when you're sending emails.",
             "homepage": "https://github.com/tijsverkoyen/CssToInlineStyles",
             "time": "2017-11-27T11:13:29+00:00"
+        },
+        {
+            "name": "triagens/arangodb",
+            "version": "v3.3.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/arangodb/arangodb-php.git",
+                "reference": "15829590ba3fa2b163c6b496c83e35016a886d52"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/arangodb/arangodb-php/zipball/15829590ba3fa2b163c6b496c83e35016a886d52",
+                "reference": "15829590ba3fa2b163c6b496c83e35016a886d52",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "ArangoDBClient": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Jan Steemann",
+                    "homepage": "https://github.com/arangodb/arangodb-php",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Frank Mayer",
+                    "homepage": "https://github.com/arangodb/arangodb-php",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Contributors",
+                    "homepage": "https://github.com/arangodb/arangodb-php/graphs/contributors"
+                }
+            ],
+            "description": "ArangoDB PHP client",
+            "homepage": "https://github.com/arangodb/arangodb-php",
+            "keywords": [
+                "Arango",
+                "ArangoDb",
+                "database",
+                "distributed",
+                "document store",
+                "graph database",
+                "multi-model",
+                "nosql"
+            ],
+            "time": "2018-02-18T15:01:16+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
