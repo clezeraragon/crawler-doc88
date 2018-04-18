@@ -17,20 +17,7 @@ Route::get('/', function () {
 
     return view('welcome');
 });
-//
-//Route::get('/', function () {
-//
-//
-//$crawler = $client->request('GET', 'http://www2.aneel.gov.br/cedoc/dsp2018573ti.pdf');
-////Storage::download($crawler->getBaseHref());
-//$cookieJar = $client->getCookieJar();
-//$guzzleClient = $client->getClient();
-//$jar = GuzzleHttp\Cookie\CookieJar::fromArray($cookieJar->all(), 'http://www.unicamp.br');
-//$response = $guzzleClient->get($crawler->getBaseHref(), ['cookies' => $jar, 'save_to' => storage_path('app/public').'/teste.pdf']);
-//Storage::download($response);
-//dump($response);
-//    return view('welcome');
-//});
+
 Route::get('/proinfa', 'AneelController@proInfa')->name('proinfa');
 Route::get('/conta-desenv-energ', 'AneelController@contaDesenvEnerg')->name('conta_desenv_energ');
 
