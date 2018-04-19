@@ -14,6 +14,7 @@ class StorageDirectory
 
     public function saveDirectory($diretorio,$arquivo,$content)
     {
-      return  Storage::disk('local')->put($diretorio.'/'.$arquivo, $content);
+       Storage::disk('local')->put($diretorio.'/'.$arquivo, $content);
+      return Storage::files($diretorio);
     }
 }
