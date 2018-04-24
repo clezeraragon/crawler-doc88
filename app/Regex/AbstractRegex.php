@@ -64,11 +64,6 @@ abstract class AbstractRegex
 
     protected function limpaString($string) {
         $string = trim($string);
-
-        #$string = preg_replace('/\s(?=\s)/' , '' , $string);
-        #$string = preg_replace('/[\n\r\t]/' , ' ' , $string);
-        #$string = mysql_real_escape_string($string);
-
         return $string;
     }
 

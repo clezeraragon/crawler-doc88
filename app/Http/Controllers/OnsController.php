@@ -2,6 +2,7 @@
 
 namespace Crawler\Http\Controllers;
 
+use Carbon\Carbon;
 use Crawler\Regex\RegexSdroDiario;
 use Crawler\Regex\RegexSdroSemanal;
 use Crawler\StorageDirectory\StorageDirectory;
@@ -9,7 +10,8 @@ use Illuminate\Http\Request;
 use Ixudra\Curl\Facades\Curl;
 use Goutte\Client;
 use Crawler\Regex\RegexMltEnas;
-use Crawler\Model\AragonDb;
+use Crawler\Model\ArangoDb;
+
 
 class OnsController extends Controller
 {
@@ -18,12 +20,12 @@ class OnsController extends Controller
     private $regexSdroDiario;
     private $client;
     private $regexMltEnas;
-    private $aragonDb;
+    private $arangoDb;
 
     public function __construct(RegexSdroSemanal $regexSdroSemanal,
                                 StorageDirectory $storageDirectory,
                                 Client $client,
-                                AragonDb $aragonDb,
+                                ArangoDb $arangoDb,
                                 RegexMltEnas $regexMltEnas,
                                 RegexSdroDiario $regexSdroDiario)
     {
@@ -32,7 +34,7 @@ class OnsController extends Controller
         $this->regexSdroDiario = $regexSdroDiario;
         $this->client = $client;
         $this->regexMltEnas = $regexMltEnas;
-        $this->aragonDb = $aragonDb;
+        $this->arangoDb = $arangoDb;
     }
 
 
@@ -63,17 +65,18 @@ class OnsController extends Controller
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
-                if ($this->aragonDb->collectionHandler()->has('ons')) {
+                if ($this->arangoDb->collectionHandler()->has('ons')) {
 
-                    $this->aragonDb->documment()->set('ons_semanal', $url_download);
-                    $id = $this->aragonDb->documentHandler()->save('ons', $this->aragonDb->documment());
+                    $this->arangoDb->documment()->set('ons_semanal', $url_download);
+                    $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
 
                 } else {
 
                     // create a new collection
-                    $this->aragonDb->collection()->setName('ons');
-                    $this->aragonDb->documment()->set('ons_semanal', $url_download);
-                    $id = $this->aragonDb->collectionHandler()->create($this->aragonDb->collection());
+                    $this->arangoDb->collection()->setName('ons');
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+                    $this->arangoDb->documment()->set('ons_semanal', $url_download);
+                    $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {
                 print 'Connection error: ' . $e->getMessage() . PHP_EOL;
@@ -119,17 +122,18 @@ class OnsController extends Controller
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
-                if ($this->aragonDb->collectionHandler()->has('ons')) {
+                if ($this->arangoDb->collectionHandler()->has('ons')) {
 
-                    $this->aragonDb->documment()->set('ons_boletim_diario', $url_download);
-                    $id = $this->aragonDb->documentHandler()->save('ons', $this->aragonDb->documment());
+                    $this->arangoDb->documment()->set('ons_boletim_diario', $url_download);
+                    $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
 
                 } else {
 
                     // create a new collection
-                    $this->aragonDb->collection()->setName('ons');
-                    $this->aragonDb->documment()->set('ons_boletim_diario', $url_download);
-                    $id = $this->aragonDb->collectionHandler()->create($this->aragonDb->collection());
+                    $this->arangoDb->collection()->setName('ons');
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+                    $this->arangoDb->documment()->set('ons_boletim_diario', $url_download);
+                    $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {
                 print 'Connection error: ' . $e->getMessage() . PHP_EOL;
@@ -175,17 +179,18 @@ class OnsController extends Controller
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
-                if ($this->aragonDb->collectionHandler()->has('ons')) {
+                if ($this->arangoDb->collectionHandler()->has('ons')) {
 
-                    $this->aragonDb->documment()->set('ons_enas_diario', $url_download);
-                    $id = $this->aragonDb->documentHandler()->save('ons', $this->aragonDb->documment());
+                    $this->arangoDb->documment()->set('ons_enas_diario', $url_download);
+                    $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
 
                 } else {
 
                     // create a new collection
-                    $this->aragonDb->collection()->setName('ons');
-                    $this->aragonDb->documment()->set('ons_enas_diario', $url_download);
-                    $id = $this->aragonDb->collectionHandler()->create($this->aragonDb->collection());
+                    $this->arangoDb->collection()->setName('ons');
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+                    $this->arangoDb->documment()->set('ons_enas_diario', $url_download);
+                    $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {
                 print 'Connection error: ' . $e->getMessage() . PHP_EOL;
@@ -202,4 +207,53 @@ class OnsController extends Controller
         }
     }
 
+    public function getAcervoDigitalDiario()
+    {
+        $date = Carbon::now()->subDay(1);
+        $date_format = $date->format('d-m-Y');
+        $ext = '.pdf';
+
+        $crawler = $this->client->request('GET', 'http://ons.org.br/_layouts/download.aspx?SourceUrl=http://ons.org.br/AcervoDigitalDocumentosEPublicacoes/IPDO-'.$date_format.$ext);
+        $cookieJar = $this->client->getCookieJar();
+        $this->client->getClient();
+        \GuzzleHttp\Cookie\CookieJar::fromArray($cookieJar->all(), 'http://ons.org.br/');
+
+        $results_download = Curl::to($crawler->getBaseHref())
+            ->withContentType('application/pdf')
+            ->download('');
+        $url_download[$date_format]['url_download_ipdo_diario'] = $this->storageDirectory->saveDirectory('ons/ipdo/'.$date_format.'/', 'IPDO-'.$date_format.$ext, $results_download);
+
+
+        // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
+
+        try {
+            if ($this->arangoDb->collectionHandler()->has('ons')) {
+
+                $this->arangoDb->documment()->set('ons_ipdo', $url_download);
+                $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
+
+            } else {
+
+                // create a new collection
+                $this->arangoDb->collection()->setName('ons');
+                $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+                $this->arangoDb->documment()->set('ons_ipdo', $url_download);
+                $this->arangoDb->documentHandler()->save('ons', $this->arangoDb->documment());
+            }
+        } catch (ArangoConnectException $e) {
+            print 'Connection error: ' . $e->getMessage() . PHP_EOL;
+        } catch (ArangoClientException $e) {
+            print 'Client error: ' . $e->getMessage() . PHP_EOL;
+        } catch (ArangoServerException $e) {
+            print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
+        }
+
+        return response()->json([
+            'site' => 'http://ons.org.br/',
+            'responsabilidade' => 'Realizar download do arquivo IPDO(informativo preliminar diário operacional).',
+            'status' => 'Crawler IPDO realizado com sucesso!'
+        ]);
+    }
+
 }
+

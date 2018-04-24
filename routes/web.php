@@ -24,6 +24,7 @@ Route::prefix('ons')->group(function () {
     Route::get('/sdro-semanal', 'OnsController@sdroSemanal')->name('sdro_semanal');
     Route::get('/sdro-diario', 'OnsController@sdroDiario')->name('sdro_diario');
     Route::get('/mlt-enas-diario', 'OnsController@operacaoEnasDiario')->name('mlt_enas_diario');
+    Route::get('/acervo-digital', 'OnsController@getAcervoDigitalDiario')->name('acervo_digital');
 
 });
 

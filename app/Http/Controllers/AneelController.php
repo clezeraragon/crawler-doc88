@@ -3,7 +3,7 @@
 namespace Crawler\Http\Controllers;
 
 
-use Crawler\Model\AragonDb;
+use Crawler\Model\ArangoDb;
 use Crawler\Regex\RegexAneel;
 use Crawler\StorageDirectory\StorageDirectory;
 use http\Env\Response;
@@ -17,13 +17,13 @@ class AneelController extends Controller
 
     private $regexAneel;
     private $storageDirectory;
-    private $aragonDb;
+    private $arangoDb;
 
-    public function __construct( RegexAneel $regexAneel,StorageDirectory $storageDirectory,AragonDb $aragonDb)
+    public function __construct(RegexAneel $regexAneel, StorageDirectory $storageDirectory, ArangoDb $arangoDb)
     {
         $this->regexAneel = $regexAneel;
         $this->storageDirectory = $storageDirectory;
-        $this->aragonDb = $aragonDb;
+        $this->arangoDb = $arangoDb;
     }
 
     public function proInfa()
@@ -102,17 +102,17 @@ class AneelController extends Controller
         // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
         try {
-            if ($this->aragonDb->collectionHandler()->has('aneel_proinfa')) {
+            if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
 
-                $this->aragonDb->documment()->set('proInfa', $resultados);
-                $id = $this->aragonDb->documentHandler()->save('aneel_proinfa', $this->aragonDb->documment());
+                $this->arangoDb->documment()->set('proInfa', $resultados);
+                $id = $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
 
             } else {
 
                 // create a new collection
-                $this->aragonDb->collection()->setName('aneel_proinfa');
-                $this->aragonDb->documment()->set('proInfa', $resultados);
-                $id = $this->aragonDb->collectionHandler()->create($this->aragonDb->collection());
+                $this->arangoDb->collection()->setName('aneel_proinfa');
+                $this->arangoDb->documment()->set('proInfa', $resultados);
+                $id = $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
             }
         }
         catch (ArangoConnectException $e) {
@@ -204,16 +204,16 @@ class AneelController extends Controller
         // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
         try {
-            if ($this->aragonDb->collectionHandler()->has('aneel_proinfa')) {
+            if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
 
-                $this->aragonDb->documment()->set('conta_desenvolvimento_energetico', $resultados);
-                $id = $this->aragonDb->documentHandler()->save('aneel_proinfa', $this->aragonDb->documment());
+                $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', $resultados);
+                $id = $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
 
             } else {
                 // create a new collection
-                $this->aragonDb->collection()->setName('aneel_proinfa');
-                $this->aragonDb->documment()->set('conta_desenvolvimento_energetico', $resultados);
-                $id = $this->aragonDb->collectionHandler()->create($this->aragonDb->collection());
+                $this->arangoDb->collection()->setName('aneel_proinfa');
+                $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', $resultados);
+                $id = $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
             }
         }
         catch (ArangoConnectException $e) {

@@ -9,7 +9,7 @@ use ArangoDBClient\Collection as ArangoCollection;
 use ArangoDBClient\Document as ArangoDocument;
 use ArangoDBClient\DocumentHandler as ArangoDocumentHandler;
 
-class AragonDb
+class ArangoDb
 {
 
     private $arangoConnection;
