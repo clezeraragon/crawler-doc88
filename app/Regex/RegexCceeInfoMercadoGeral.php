@@ -11,9 +11,14 @@ namespace Crawler\Regex;
 
 class RegexCceeInfoMercadoGeral extends AbstractRegex
 {
-    public function capturaUrlDownload($page_acesso)
+    public function capturaUrlDownloadGeral($page_acesso)
     {
         $regex = '/class="btn-enviar-big..href="\/(.*?)"/ ';
-        return $this->regexFirst($regex, $page_acesso, 0, ['norma']);
+        return $this->regexFirst($regex, $page_acesso, 0);
+    }
+    public function capturaUrlDownloadIndividual($page_acesso)
+    {
+        $regex = '/btn-enviar-big margin-left10..href="\/(.*?)"/ ';
+        return $this->regexFirst($regex, $page_acesso, 0);
     }
 }

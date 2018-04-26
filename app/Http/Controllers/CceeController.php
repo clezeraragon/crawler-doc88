@@ -101,7 +101,8 @@ class CceeController extends Controller
         // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
         try {
-            if ($this->arangoDb->collectionHandler()->has('Ccee')) {
+
+            if ($this->arangoDb->collectionHandler()->has('ccee')) {
 
                 $this->arangoDb->documment()->set('sudeste_centro_oeste', $sudeste_centro_oeste);
                 $this->arangoDb->documment()->set('sul', $sul);
@@ -112,7 +113,7 @@ class CceeController extends Controller
             } else {
 
                 // create a new collection
-                $this->arangoDb->collection()->setName('Ccee');
+                $this->arangoDb->collection()->setName('ccee');
                 $this->arangoDb->documment()->set('sudeste_centro_oeste', $sudeste_centro_oeste);
                 $this->arangoDb->documment()->set('sul', $sul);
                 $this->arangoDb->documment()->set('nordeste', $nordeste);
@@ -133,37 +134,56 @@ class CceeController extends Controller
             'status' => 'Crawler Ccee semanal realizado com sucesso!'
         ]);
     }
-    public function getInfoMercadoGeral()
+    public function getInfoMercadoGeralAndIndividual()
     {
         $carbon = Carbon::now();
         $date = $carbon->format('Y-m-d');
 
-        $url_base = "https://www.ccee.org.br/portal/faces/oracle/webcenter/portalapp/pages/publico/oquefazemos/infos/abas_infomercado.jspx";
+        $url_base = 'https://www.ccee.org.br/';
+        $url_base_1 = 'https://www.ccee.org.br/portal/js/informacoes_mercado.js?_=1524754496465';
+        $url_base_2 = 'https://www.ccee.org.br/portal/faces/oracle/webcenter/portalapp/pages/publico/oquefazemos/infos/abas_infomercado.jspx';
 
-        $crawler = $this->client->request('GET', $url_base,array('allow_redirects' => true));
-        $this->client->getCookieJar();
+        $this->client->request('GET', $url_base_1,array('allow_redirects' => true));
+        $crawler = $this->client->request('POST', $url_base_2,array('allow_redirects' => true,'aba' => 'aba_info_mercado_mensal'));
+
+
+        $cookieJar = $this->client->getCookieJar();
         $get_response_site = $this->client->getResponse();
+        $get_client = $this->client->getClient();
+
+        $downloads = [];
 
         if($get_response_site->getStatus() == 200) {
 
+            $downloads = [
+                'geral' => $url_dowload_geral = $this->regexCceeInfoMercadoGeral->capturaUrlDownloadGeral($crawler->html()),
+                'individual' => $url_dowload_individual = $this->regexCceeInfoMercadoGeral->capturaUrlDownloadIndividual($crawler->html()),
+            ];
 
-            $url_dowload = $this->regexCceeInfoMercadoGeral->capturaUrlDownload($crawler->html());
+            foreach ($downloads as  $key => $download) {
 
-            dump($crawler);die; // parei aqui
-            $url_base = 'https://www.ccee.org.br/';
-            $mont_url_download = $url_base . $url_dowload;
+                $mont_url_download = $url_base . $download;
 
-            $result_download = Curl::to($mont_url_download)
-                ->setCookieFile('t')
-                ->withContentType('application/xlsx')
-                ->download('');
+                $jar = \GuzzleHttp\Cookie\CookieJar::fromArray($cookieJar->all(), $url_base);
+                $response = $get_client->get($mont_url_download, ['cookies' => $jar, 'allow_redirects' => true]);
 
-            $resultado = $this->storageDirectory->saveDirectory('ccee/mensal/geral/'.$date.'/', 'InfoMercado_Dados_Gerais_2018.xlsx', $result_download);
+                $result_download = Curl::to($mont_url_download)
+                    ->setCookieJar('down')
+                    ->allowRedirect(true)
+                    ->withContentType('application/xlsx')
+                    ->download('');
+                if($key == 'geral') {
+                    $resultado['geral'][$date] = $this->storageDirectory->saveDirectory('ccee/mensal/'.$key.'/' . $date . '/', 'InfoMercado_Dados_Gerais.xlsx', $result_download);
+                }else{
+                    $resultado['individual'][$date] = $this->storageDirectory->saveDirectory('ccee/mensal/'.$key.'/' . $date . '/', 'InfoMercado_Dados_Individuais.xlsx', $result_download);
+                }
+            }
 
             try {
                 if ($this->arangoDb->collectionHandler()->has('ccee')) {
 
-                    $this->arangoDb->documment()->set('gerais', $resultado);
+                    $this->arangoDb->documment()->set('geral', $resultado['geral']);
+                    $this->arangoDb->documment()->set('individual', $resultado['individual']);
                     $this->arangoDb->documentHandler()->save('ccee', $this->arangoDb->documment());
 
                 } else {
@@ -172,7 +192,8 @@ class CceeController extends Controller
                     $this->arangoDb->collection()->setName('ccee');
                     $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
 
-                    $this->arangoDb->documment()->set('gerais', $resultado);
+                    $this->arangoDb->documment()->set('geral', $resultado['geral']);
+                    $this->arangoDb->documment()->set('individual', $resultado['individual']);
                     $this->arangoDb->documentHandler()->save('ccee', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {
@@ -186,7 +207,7 @@ class CceeController extends Controller
             return response()->json([
                 'site' => 'https://www.ccee.org.br/portal/faces/oracle/webcenter/portalapp/pages/publico/oquefazemos/infos/abas_infomercado.jspx',
                 'responsabilidade' => 'Realizar o download do arquivo info-mercado',
-                'status' => 'Crawler Ccee mensal realizado com sucesso!'
+                'status' => 'Crawler Ccee Info-Mercado-Geral e Individual mensal realizado com sucesso!'
             ]);
 
         }else{
@@ -197,53 +218,6 @@ class CceeController extends Controller
             ]);
         }
     }
-    public function getIndividual()
-    {
-        $response = Curl::to('https://www.ccee.org.br/portal/faces/oracle/webcenter/portalapp/pages/publico/oquefazemos/infos/abas_infomercado.jspx')
-            ->withData(
-                array(
-                    'aba' => 'aba_info_mercado_mensal' ,
-                ) )
-            ->setCookieFile('t')
-            ->post();
 
-        $url_dowload = $this->regexCceeInfoMercadoIndividuais->capturaUrlDownload($response);
-        $url_base = 'https://www.ccee.org.br/';
-        $mont_url_download = $url_base.$url_dowload;
-
-        $result_download =  Curl::to($mont_url_download)
-            ->setCookieFile('t')
-            ->withContentType('application/xlsx')
-            ->download('');
-
-        $resultado = $this->storageDirectory->saveDirectory('ccee/mensal/individual','InfoMercado_Dados_Individuais_2018.xlsx',$result_download);
-
-
-        try {
-            if ($this->arangoDb->collectionHandler()->has('ccee')) {
-
-                $this->arangoDb->documment()->set('individuais', $resultado);
-                $this->arangoDb->documentHandler()->save('ccee', $this->arangoDb->documment());
-
-            } else {
-
-                // create a new collection
-                $this->arangoDb->collection()->setName('ccee');
-                $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
-
-                $this->arangoDb->documment()->set('individuais', $resultado);
-                $this->arangoDb->documentHandler()->save('ccee', $this->arangoDb->documment());
-            }
-        }
-        catch (ArangoConnectException $e) {
-            print 'Connection error: ' . $e->getMessage() . PHP_EOL;
-        } catch (ArangoClientException $e) {
-            print 'Client error: ' . $e->getMessage() . PHP_EOL;
-        } catch (ArangoServerException $e) {
-            print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
-        }
-        return "Registro criado com sucesso!";
-
-    }
 
 }

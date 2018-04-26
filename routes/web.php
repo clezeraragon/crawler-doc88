@@ -31,7 +31,8 @@ Route::prefix('ons')->group(function () {
 
 Route::prefix('ccee')->group(function () {
     Route::get('/historico-semanal', 'CceeController@historicoPrecoSemanal')->name('historico_semanal');
-    Route::get('/info-mercado-geral', 'CceeController@getInfoMercadoGeral')->name('info_mercado_geral');
+    Route::get('/info-mercado-geral', 'CceeController@getInfoMercadoGeralAndIndividual')->name('info_mercado_geral');
+//    Route::get('/info-mercado-individual', 'CceeController@getIndividual')->name('info_mercado_individual');
 
 });
 
