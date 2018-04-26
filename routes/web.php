@@ -24,13 +24,18 @@ Route::prefix('ons')->group(function () {
     Route::get('/sdro-semanal', 'OnsController@sdroSemanal')->name('sdro_semanal');
     Route::get('/sdro-diario', 'OnsController@sdroDiario')->name('sdro_diario');
     Route::get('/mlt-enas-diario', 'OnsController@operacaoEnasDiario')->name('mlt_enas_diario');
-    Route::get('/acervo-digital', 'OnsController@getAcervoDigitalDiario')->name('acervo_digital');
+    Route::get('/acervo-digital-ipdo', 'OnsController@getAcervoDigitalIpdoDiario')->name('acervo_digital_ipdo');
+    Route::get('/acervo-digital-pmo', 'OnsController@getAcervoDigitalPmoSemanal')->name('acervo_digital_pmo');
 
 });
 
 Route::prefix('ccee')->group(function () {
     Route::get('/historico-semanal', 'CceeController@historicoPrecoSemanal')->name('historico_semanal');
+    Route::get('/info-mercado-geral', 'CceeController@getInfoMercadoGeral')->name('info_mercado_geral');
 
 });
 
 Route::get('/arango', 'ArangoDbController@index')->name('arango');
+
+Route::get('/cde-eletrobras', 'EletroBrasController@getCde')->name('cde-eletrobras');
+Route::get('/epe-consumo', 'EpeConsumoController@getConsumo')->name('epe-consumo');

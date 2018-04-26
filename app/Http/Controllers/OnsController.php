@@ -12,7 +12,6 @@ use Goutte\Client;
 use Crawler\Regex\RegexMltEnas;
 use Crawler\Model\ArangoDb;
 
-
 class OnsController extends Controller
 {
     private $regexSdroSemanal;
@@ -207,7 +206,7 @@ class OnsController extends Controller
         }
     }
 
-    public function getAcervoDigitalDiario()
+    public function getAcervoDigitalIpdoDiario()
     {
         $date = Carbon::now()->subDay(1);
         $date_format = $date->format('d-m-Y');
@@ -255,5 +254,29 @@ class OnsController extends Controller
         ]);
     }
 
-}
+    public function getAcervoDigitalPmoSemanal()
+    {
 
+        $data_raw = [
+            'raw data' => '<Request xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="Javascript Library"><Actions><ObjectPath Id="1" ObjectPathId="0" /><ObjectPath Id="3" ObjectPathId="2" /><ObjectPath Id="5" ObjectPathId="4" /><ObjectPath Id="7" ObjectPathId="6" /><ObjectIdentityQuery Id="8" ObjectPathId="6" /><ObjectPath Id="10" ObjectPathId="9" /><Query Id="11" ObjectPathId="9"><Query SelectAllProperties="true"><Properties /></Query><ChildItemQuery SelectAllProperties="true"><Properties /></ChildItemQuery></Query></Actions><ObjectPaths><StaticProperty Id="0" TypeId="{3747adcd-a3c3-41b9-bfab-4a64dd2f1e0a}" Name="Current" /><Property Id="2" ParentId="0" Name="Web" /><Property Id="4" ParentId="2" Name="Lists" /><Method Id="6" ParentId="4" Name="GetByTitle"><Parameters><Parameter Type="String">Home - Webdoor</Parameter></Parameters></Method><Method Id="9" ParentId="6" Name="GetItems"><Parameters><Parameter TypeId="{3d248d7b-fc86-40a3-aa97-02a75d69fb8a}"><Property Name="DatesInUtc" Type="Boolean">true</Property><Property Name="FolderServerRelativeUrl" Type="Null" /><Property Name="ListItemCollectionPosition" Type="Null" /><Property Name="ViewXml" Type="String">&lt;View&gt; &lt;Query&gt; &lt;Where&gt;	&lt;And&gt;	&lt;Leq&gt;	&lt;FieldRef Name=\'PublicarEm\' /&gt;	&lt;Value IncludeTimeValue=\'TRUE\' Type=\'DateTime\'&gt;2018-04-25T10:01:04Z&lt;/Value&gt;	&lt;/Leq&gt; &lt;Or&gt;	&lt;Geq&gt; &lt;FieldRef Name=\'ExpirarEm\' /&gt;	&lt;Value IncludeTimeValue=\'TRUE\' Type=\'DateTime\'&gt;2018-04-25T10:01:04Z&lt;/Value&gt;	&lt;/Geq&gt; &lt;IsNull&gt; &lt;FieldRef Name=\'ExpirarEm\' /&gt; &lt;/IsNull&gt; &lt;/Or&gt; &lt;/And&gt; &lt;/Where&gt; &lt;OrderBy&gt; &lt;FieldRef Name=\'Ordem\' /&gt; &lt;FieldRef Name=\'PublicarEm\' Ascending=\'desc\' /&gt; &lt;/OrderBy&gt; &lt;/Query&gt; &lt;RowLimit&gt;1&lt;/RowLimit&gt;&lt;/View&gt;</Property></Parameter></Parameters></Method></ObjectPaths></Request>'
+        ];
+
+        $headers = ['X-Requested-With' => 'XMLHttpRequest','Content-Type' => 'text/xml','X-RequestDigest'=>'0xC93DE16C7303A566966C41142C1D109583CA86D39BD8DFACC45103D6B5102600FAA6688ABF148F9721056000E4F7B7A84AFE62D9FCC5A07EE377C7C962223C2C,25 Apr 2018 13:01:03 -0000'];
+        $body = 'Hello!';
+        $request = new \Request('HEAD', 'http://ons.org.br', $headers);
+
+        $jar = new \GuzzleHttp\Cookie\CookieJar;
+        $crawler = $this->client->request('POST', 'http://ons.org.br/_vti_bin/client.svc/ProcessQuery',[
+            'cookies' => $jar,
+            'body' => $data_raw
+        ]);
+        $get_response_site = $this->client->getResponse();
+
+        dump($get_response_site);
+    }
+
+}
+//http://ons.org.br/AcervoDigitalDocumentosEPublicacoes/SUMARIO_EXECUTIVO_PMO_201804_RV3.pdf
+//http://ons.org.br/AcervoDigitalDocumentosEPublicacoes/InformePMO_ABR2018_RV3.pdf
+//
+//http://ons.org.br/_layouts/download.aspx?SourceUrl=http://ons.org.br/AcervoDigitalDocumentosEPublicacoes/SUMARIO_EXECUTIVO_PMO_201804_RV3.pdf
