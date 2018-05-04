@@ -102,4 +102,5 @@ class RegexAneel extends AbstractRegex
     {
         return str_replace(" ", "+", $dado);
     }
+
 }

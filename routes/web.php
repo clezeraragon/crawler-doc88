@@ -19,6 +19,7 @@ Route::get('/', function () {
 Route::prefix('aneel')->group(function () {
     Route::get('/proinfa', 'AneelController@proInfa')->name('proinfa');
     Route::get('/conta-desenv-energ', 'AneelController@contaDesenvEnerg')->name('conta_desenv_energ');
+    Route::get('/cde-audiencia', 'AneelController@cdeAudiencia')->name('cde-audiencia');
 });
 
 Route::prefix('ons')->group(function () {
@@ -33,6 +34,7 @@ Route::prefix('ons')->group(function () {
 Route::prefix('ccee')->group(function () {
     Route::get('/historico-semanal', 'CceeController@historicoPrecoSemanal')->name('historico_semanal');
     Route::get('/info-mercado-geral', 'CceeController@getInfoMercadoGeralAndIndividual')->name('info_mercado_geral');
+    Route::get('/historico-mensal', 'CceeController@historicoPrecoMensal')->name('historico_mensal');
 
 });
 

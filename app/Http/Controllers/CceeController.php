@@ -12,6 +12,7 @@ use ArangoDBClient\ConnectException as ArangoConnectException;
 use ArangoDBClient\ClientException as ArangoClientException;
 use ArangoDBClient\ServerException as ArangoServerException;
 use Crawler\Regex\RegexCceePldSemanal;
+use Crawler\Regex\RegexCceePldMensal;
 
 
 class CceeController extends Controller
@@ -21,18 +22,76 @@ class CceeController extends Controller
     private $regexCceePldSemanal;
     private $arangoDb;
     private $regexCceeInfoMercadoGeral;
+    private $regexCceePldMensal;
 
     public function __construct(StorageDirectory $storageDirectory,
                                 Client $client,
                                 RegexCceePldSemanal $regexCceePldSemanal,
+                                RegexCceePldMensal $regexCceePldMensal,
                                 RegexCceeInfoMercadoGeral $regexCceeInfoMercadoGeral,
                                 ArangoDb $arangoDb)
     {
         $this->storageDirectory = $storageDirectory;
         $this->client = $client;
         $this->regexCceePldSemanal = $regexCceePldSemanal;
+        $this->regexCceePldMensal = $regexCceePldMensal;
         $this->arangoDb = $arangoDb;
         $this->regexCceeInfoMercadoGeral = $regexCceeInfoMercadoGeral;
+    }
+    public function historicoPrecoMensal()
+    {
+        $url_base = "https://www.ccee.org.br/preco/precoMedio.do";
+
+        $crawler = $this->client->request('GET', $url_base, array('allow_redirects' => true));
+        $this->client->getCookieJar();
+
+
+        $results  = explode('<table class="displaytag-Table_soma">',$this->regexCceePldMensal->clearHtml($crawler->html()));
+
+
+        foreach ($results as $result) {
+            $mes = $this->regexCceePldMensal->capturaMes($result);
+        }
+
+        foreach ($results as $result)
+        {
+            $atual['Mensal'][$mes]= [
+                'Sudeste_Centro-oeste' => $this->regexCceePldMensal->capturaSeCo($result),
+                'Sul' => $this->regexCceePldMensal->capturaS($result),
+                'Nordeste' => $this->regexCceePldMensal->capturaNe($result),
+                'Norte' => $this->regexCceePldMensal->capturaN($result),
+            ];
+
+        }
+
+        try {
+
+            if ($this->arangoDb->collectionHandler()->has('ccee')) {
+
+                $this->arangoDb->documment()->set('Pld', $atual);
+                $this->arangoDb->documentHandler()->save('ccee', $this->arangoDb->documment());
+
+            } else {
+
+                // create a new collection
+                $this->arangoDb->collection()->setName('ccee');
+
+                $this->arangoDb->documment()->set('Pld', $atual);
+                $this->arangoDb->collectionHandler()->create('ccee', $this->arangoDb->documment());
+            }
+        } catch (ArangoConnectException $e) {
+            print 'Connection error: ' . $e->getMessage() . PHP_EOL;
+        } catch (ArangoClientException $e) {
+            print 'Client error: ' . $e->getMessage() . PHP_EOL;
+        } catch (ArangoServerException $e) {
+            print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
+        }
+
+        return response()->json([
+            'site' => 'https://www.ccee.org.br//preco/precoMedio.do/',
+            'responsabilidade' => 'Realizar a capitura mensal das informações na tabela Html',
+            'status' => 'Crawler Ccee mensal realizado com sucesso!'
+        ]);
     }
 
     public function historicoPrecoSemanal()

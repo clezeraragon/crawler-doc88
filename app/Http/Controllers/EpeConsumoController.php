@@ -10,37 +10,45 @@ use ArangoDBClient\ClientException as ArangoClientException;
 use ArangoDBClient\ServerException as ArangoServerException;
 use Crawler\Model\ArangoDb;
 use Carbon\Carbon;
+use Crawler\Regex\RegexEpe;
 
 class EpeConsumoController extends Controller
 {
     private $storageDirectory;
     private $arangoDb;
+    private $regexEpe;
 
-    public function __construct(StorageDirectory $storageDirectory,ArangoDb $arangoDb)
+    public function __construct(StorageDirectory $storageDirectory,ArangoDb $arangoDb, RegexEpe $regexEpe)
 
     {
         $this->storageDirectory = $storageDirectory;
         $this->arangoDb = $arangoDb;
-    }//
+        $this->regexEpe = $regexEpe;
+    }
+
     public function getConsumo()
     {
         $carbon = Carbon::now();
-        $date = $carbon->format('Y-m-d');
+        $date = $carbon->format('m-Y');
+        $ano = $carbon->format('Y');
 
-        $url_base = "www.epe.gov.br/sites-pt/publicacoes-dados-abertos/publicacoes/PublicacoesArquivos/publicacao-190/MERCADO%20MENSAL%20PARA%20DOWNLOAD%20CONSUMO.XLS";
+        $url_base = 'http://www.epe.gov.br';
+        $url = "http://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes/Consumo-mensal-de-energia-eletrica-por-classe-regioes-e-subsistemas";
 
-        $results_download_status =  Curl::to($url_base)
+        $response = Curl::to($url)
             ->returnResponseObject()
             ->get();
 
 
-        if($results_download_status->status == 200) {
+        if ($response->status == 200) {
 
-            $results_download =  Curl::to($url_base)
-                ->withContentType('application/xlsx')
+            $url_download = $this->regexEpe->capturaDownload($response->content);
+
+            $result_download = Curl::to($url_base.$url_download.'.xls')
+                ->withContentType('application/xls')
                 ->download('');
 
-            $resultado = $this->storageDirectory->saveDirectory('epe/' . $date . '/', 'MERCADO_MENSAL_PARA_DOWNLOAD_CONSUMO.xlsx', $results_download);
+            $resultado = $this->storageDirectory->saveDirectory('epe/' . $date . '/', 'MERCADO_MENSAL_PARA_DOWLOAD_COLADO_2004-'.$ano.'.xls', $result_download);
 
             try {
                 if ($this->arangoDb->collectionHandler()->has('epe')) {
@@ -52,10 +60,8 @@ class EpeConsumoController extends Controller
 
                     // create a new collection
                     $this->arangoDb->collection()->setName('epe');
-                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
-
                     $this->arangoDb->documment()->set('consumo', $resultado);
-                    $this->arangoDb->documentHandler()->save('epe', $this->arangoDb->documment());
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
                 }
             } catch (ArangoConnectException $e) {
                 print 'Connection error: ' . $e->getMessage() . PHP_EOL;
@@ -78,4 +84,6 @@ class EpeConsumoController extends Controller
         ]);
 
     }
+
+
 }

@@ -13,6 +13,7 @@ use Ixudra\Curl\Facades\Curl;
 use ArangoDBClient\ConnectException as ArangoConnectException;
 use ArangoDBClient\ClientException as ArangoClientException;
 use ArangoDBClient\ServerException as ArangoServerException;
+use Goutte\Client;
 class AneelController extends Controller
 {
 
@@ -106,20 +107,20 @@ class AneelController extends Controller
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
-                if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
+                if ($this->arangoDb->collectionHandler()->has('aneel')) {
 
-                    $this->arangoDb->documment()->set('proinfa', [$date_format => $resultados]);
-                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+                    $this->arangoDb->documment()->set('proInfa', [$date_format => $resultados]);
+                    $this->arangoDb->documentHandler()->save('aneel', $this->arangoDb->documment());
 
                 } else {
 
                     // create a new collection
-                    $this->arangoDb->collection()->setName('aneel_proinfa');
+                    $this->arangoDb->collection()->setName('aneel');
                     $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
 
                     // create a new documment
-                    $this->arangoDb->documment()->set('proinfa', [$date_format => $resultados]);
-                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+                    $this->arangoDb->documment()->set('proInfa', [$date_format => $resultados]);
+                    $this->arangoDb->documentHandler()->save('aneel', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {
                 print 'Connection error: ' . $e->getMessage() . PHP_EOL;
@@ -222,18 +223,18 @@ class AneelController extends Controller
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
-                if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
+                if ($this->arangoDb->collectionHandler()->has('aneel')) {
 
                     $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', [$date_format => $resultados]);
-                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+                    $this->arangoDb->documentHandler()->save('aneel', $this->arangoDb->documment());
 
                 } else {
                     // create a new collection
-                    $this->arangoDb->collection()->setName('aneel_proinfa');
+                    $this->arangoDb->collection()->setName('aneel');
                     $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
                     // create a new documment
                     $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', [$date_format => $resultados]);
-                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+                    $this->arangoDb->documentHandler()->save('aneel', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {
                 print 'Connection error: ' . $e->getMessage() . PHP_EOL;
@@ -260,7 +261,18 @@ class AneelController extends Controller
             ]);
         }
 
+    }
+    public function cdeAudiencia( Client $client)
+    {
+        $url_base_1 = "http://www.aneel.gov.br/audiencias-publicas?p_p_id=audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1&_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_situacao=1&_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_objetivo=conta de desenvolvimento energetico";
+        $url_base_2 ="http://www.aneel.gov.br/audiencias-publicas?p_p_id=audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1";
+        $crawler_1 = $client->request('GET', $url_base_1, array('allow_redirects' => true));
+        $get_response_site = $client->getResponse();
+        $client->getCookieJar();
 
+        $crawler_2 = $client->request('POST', $url_base_2,array('allow_redirects' => true,'_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_objetivo' => 'conta de desenvolvimento energetico'));
+
+        var_dump($get_response_site);
     }
 
 
