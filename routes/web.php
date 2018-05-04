@@ -16,9 +16,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/proinfa', 'AneelController@proInfa')->name('proinfa');
-Route::get('/conta-desenv-energ', 'AneelController@contaDesenvEnerg')->name('conta_desenv_energ');
-
+Route::prefix('aneel')->group(function () {
+    Route::get('/proinfa', 'AneelController@proInfa')->name('proinfa');
+    Route::get('/conta-desenv-energ', 'AneelController@contaDesenvEnerg')->name('conta_desenv_energ');
+});
 
 Route::prefix('ons')->group(function () {
     Route::get('/sdro-semanal', 'OnsController@sdroSemanal')->name('sdro_semanal');
@@ -32,11 +33,9 @@ Route::prefix('ons')->group(function () {
 Route::prefix('ccee')->group(function () {
     Route::get('/historico-semanal', 'CceeController@historicoPrecoSemanal')->name('historico_semanal');
     Route::get('/info-mercado-geral', 'CceeController@getInfoMercadoGeralAndIndividual')->name('info_mercado_geral');
-//    Route::get('/info-mercado-individual', 'CceeController@getIndividual')->name('info_mercado_individual');
 
 });
 
-Route::get('/arango', 'ArangoDbController@index')->name('arango');
 
 Route::get('/cde-eletrobras', 'EletroBrasController@getCde')->name('cde-eletrobras');
 Route::get('/epe-consumo', 'EpeConsumoController@getConsumo')->name('epe-consumo');

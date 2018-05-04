@@ -112,6 +112,13 @@ abstract class AbstractRegex
 
         return $val;
     }
+    public function pregReplaceString($objetivo,$replace,$valor) {
+        //25.305.480,1600
+        $results = str_replace($objetivo,$replace,$valor);
+
+
+        return $results;
+    }
 
     public function formataQuantidade($qtd) {
         return preg_replace('/\./', '', $qtd);

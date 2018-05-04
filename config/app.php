@@ -161,6 +161,8 @@ return [
         Crawler\Providers\RouteServiceProvider::class,
         Ixudra\Curl\CurlServiceProvider::class,
 
+
+
     ],
 
     /*

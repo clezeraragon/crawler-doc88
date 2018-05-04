@@ -3,6 +3,7 @@
 namespace Crawler\Http\Controllers;
 
 
+use Carbon\Carbon;
 use Crawler\Model\ArangoDb;
 use Crawler\Regex\RegexAneel;
 use Crawler\StorageDirectory\StorageDirectory;
@@ -38,99 +39,111 @@ class AneelController extends Controller
                     'leg_normas' => '2',
                     'submeteu' => 'legislacao'
                 ) )
+            ->returnResponseObject()
             ->post();
 
-        preg_match_all('/td_grid_ficha_background...(.*)/', $this->regexAneel->convert_str($response), $matches);
+        $date = Carbon::now();
+        $date_format = $date->format('Y-m-d');
+
+        if($response->status == 200) {
+
+            preg_match_all('/td_grid_ficha_background...(.*)/', $this->regexAneel->convert_str($response->content), $matches);
 
 
+            $material = $this->regexAneel->capturaMaterial($matches[0][0]);
+            $norma = $this->regexAneel->capturaNorma($matches[0][0]);
+            $data_de_assinatura = $this->regexAneel->capturaDataAssinatura($matches[0][0]);
+            $data_de_publicacao = $this->regexAneel->capturaDataPublicacao($matches[0][0]);
+            $ementa = $this->regexAneel->capturaEmenta($matches[0][0]);
+            $orgao_de_origem = $this->regexAneel->capturaOrgaoDeOriem($matches[0][0]);
+            $esfera = $this->regexAneel->capturaEsfera($matches[0][0]);
+            $situacao = $this->regexAneel->capturaSituacao($matches[0][0]);
+            $texto_integral = $this->regexAneel->capturaTextoIntegral($matches[0][0]); // download
+            $voto = $this->regexAneel->capturaVoto($matches[0][0]); //download
+            $nota_tecnica = $this->regexAneel->capturaNotaTecnica($matches[0][0]); //download
 
-        $material = $this->regexAneel->capturaMaterial($matches[0][0]);
-        $norma = $this->regexAneel->capturaNorma($matches[0][0]);
-        $data_de_assinatura = $this->regexAneel->capturaDataAssinatura($matches[0][0]);
-        $data_de_publicacao = $this->regexAneel->capturaDataPublicacao($matches[0][0]);
-        $ementa = $this->regexAneel->capturaEmenta($matches[0][0]);
-        $orgao_de_origem = $this->regexAneel->capturaOrgaoDeOriem($matches[0][0]);
-        $esfera = $this->regexAneel->capturaEsfera($matches[0][0]);
-        $situacao = $this->regexAneel->capturaSituacao($matches[0][0]);
-        $texto_integral = $this->regexAneel->capturaTextoIntegral($matches[0][0]); // download
-        $voto = $this->regexAneel->capturaVoto($matches[0][0]); //download
-        $nota_tecnica = $this->regexAneel->capturaNotaTecnica($matches[0][0]); //download
 
+            $download_texto_integral = [];
+            $download_voto = [];
+            $download_nota_tecnica = [];
 
-        $download_texto_integral = [];
-        $download_voto = [];
-        $download_nota_tecnica = [];
+            foreach ($norma as $key => $item) {
+                if (isset($texto_integral[$key]['texto_integral'])) {
+                    $results_download_integral = Curl::to($texto_integral[$key]['texto_integral'])
+                        ->withContentType('application/pdf')
+                        ->download('');
+                    $download_texto_integral = $this->storageDirectory->saveDirectory('aneel/texto_integral/'.$date_format.'/', $texto_integral[$key]['name_arquivo'], $results_download_integral);
+                } else {
+                    $download_texto_integral = array_merge($download_texto_integral, ['vazio']);
+                }
+                if (isset($voto[$key]['voto'])) {
+                    $results_download_voto = Curl::to($voto[$key]['voto'])
+                        ->withContentType('application/pdf')
+                        ->download('');
+                    $download_voto = $this->storageDirectory->saveDirectory('aneel/voto/'.$date_format.'/', $voto[$key]['name_arquivo'], $results_download_voto);
+                } else {
+                    $download_voto = array_merge($download_voto, ['vazio']);
+                }
+                if (isset($nota_tecnica[$key]['nota_tecnica'])) {
+                    $results_download_nota_tecnica = Curl::to($nota_tecnica[$key]['nota_tecnica'])
+                        ->withContentType('application/pdf')
+                        ->download('');
+                    $download_nota_tecnica = $this->storageDirectory->saveDirectory('aneel/nota_tecnica/'.$date_format.'/', $nota_tecnica[$key]['name_arquivo'], $results_download_nota_tecnica);
 
-        foreach ($norma as $key => $item )
-        {
-            if(isset($texto_integral[$key]['texto_integral'])) {
-                $results_download_integral = Curl::to($texto_integral[$key]['texto_integral'])
-                    ->withContentType('application/pdf')
-                    ->download('');
-                $download_texto_integral = $this->storageDirectory->saveDirectory('aneel/texto_integral', $texto_integral[$key]['name_arquivo'], $results_download_integral);
-            }else{
-                $download_texto_integral = array_merge($download_texto_integral,['vazio']);
+                } else {
+                    $download_nota_tecnica = array_merge($download_nota_tecnica, ['vazio']);
+                }
+
             }
-            if(isset($voto[$key]['voto'])) {
-                $results_download_voto = Curl::to($voto[$key]['voto'])
-                    ->withContentType('application/pdf')
-                    ->download('');
-                $download_voto = $this->storageDirectory->saveDirectory('aneel/voto', $voto[$key]['name_arquivo'], $results_download_voto);
-            }else{
-                $download_voto = array_merge($download_voto,['vazio']);
+            foreach ($material as $key => $item) {
+                $results[$key] = [
+                    'url_arquivo_nota_tecnica' => $download_nota_tecnica[$key],
+                    'url_arquivo_voto' => $download_voto[$key],
+                    'url_arquivo_texto_integral' => $download_texto_integral[$key]
+                ];
+                $resultados[] = array_merge($material[$key], $norma[$key], $data_de_assinatura[$key], $data_de_publicacao[$key], $ementa[$key], $orgao_de_origem[$key], $esfera[$key], $situacao[$key], $results[$key]);
             }
-            if(isset($nota_tecnica[$key]['nota_tecnica'])) {
-                $results_download_nota_tecnica = Curl::to($nota_tecnica[$key]['nota_tecnica'])
-                    ->withContentType('application/pdf')
-                    ->download('');
-                $download_nota_tecnica = $this->storageDirectory->saveDirectory('aneel/nota_tecnica', $nota_tecnica[$key]['name_arquivo'], $results_download_nota_tecnica);
+            // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
-            }else{
-                $download_nota_tecnica = array_merge($download_nota_tecnica,['vazio']);
+            try {
+                if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
+
+                    $this->arangoDb->documment()->set('proinfa', [$date_format => $resultados]);
+                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+
+                } else {
+
+                    // create a new collection
+                    $this->arangoDb->collection()->setName('aneel_proinfa');
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+
+                    // create a new documment
+                    $this->arangoDb->documment()->set('proinfa', [$date_format => $resultados]);
+                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+                }
+            } catch (ArangoConnectException $e) {
+                print 'Connection error: ' . $e->getMessage() . PHP_EOL;
+            } catch (ArangoClientException $e) {
+                print 'Client error: ' . $e->getMessage() . PHP_EOL;
+            } catch (ArangoServerException $e) {
+                print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
             }
 
-        }
-        foreach ($material as $key => $item)
-        {
-            $results[$key] = [
-                'url_arquivo_nota_tecnica' => $download_nota_tecnica[$key],
-                'url_arquivo_voto' => $download_voto[$key],
-                'url_arquivo_texto_integral' => $download_texto_integral[$key]
-            ];
-            $resultados[] = array_merge($material[$key],$norma[$key],$data_de_assinatura[$key],$data_de_publicacao[$key],$ementa[$key],$orgao_de_origem[$key],$esfera[$key],$situacao[$key],$results[$key]);
-        }
-        // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
-
-        try {
-            if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
-
-                $this->arangoDb->documment()->set('proInfa', $resultados);
-                $id = $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
-
-            } else {
-
-                // create a new collection
-                $this->arangoDb->collection()->setName('aneel_proinfa');
-                $this->arangoDb->documment()->set('proInfa', $resultados);
-                $id = $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
-            }
-        }
-        catch (ArangoConnectException $e) {
-            print 'Connection error: ' . $e->getMessage() . PHP_EOL;
-        } catch (ArangoClientException $e) {
-            print 'Client error: ' . $e->getMessage() . PHP_EOL;
-        } catch (ArangoServerException $e) {
-            print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
-        }
-
-        return response()->json(
-            [
+            return response()->json(
+                [
+                    'site' => 'www.biblioteca.aneel.gov.br',
+                    'palavra_chave' => 'proinfa',
+                    'responsabilidade' => 'O crawler pega todos os registros do site e realiza os downloads dos mesmos!',
+                    'status' => 'Crawler Aneel realizado com sucesso!'
+                ]
+            );
+        }else{
+            return response()->json([
                 'site' => 'www.biblioteca.aneel.gov.br',
-                'palavra_chave' => 'proinfa',
                 'responsabilidade' => 'O crawler pega todos os registros do site e realiza os downloads dos mesmos!',
-                'status' => 'Crawler Aneel realizado com sucesso!'
-            ]
-        );
+                'status' => 'O crawler não encontrou o arquivo especificado!'
+            ]);
+        }
 
     }
     public function contaDesenvEnerg()
@@ -145,95 +158,107 @@ class AneelController extends Controller
                     'leg_normas' => '2',
                     'submeteu' => 'legislacao'
                 ) )
+            ->returnResponseObject()
             ->post();
 
-        preg_match_all('/td_grid_ficha_background...(.*)/', $this->regexAneel->convert_str($response), $matches);
+        $date = Carbon::now();
+        $date_format = $date->format('Y-m-d');
 
-        $material = $this->regexAneel->capturaMaterial($matches[0][0]);
-        $norma =   $this->regexAneel->capturaNorma($matches[0][0]);
-        $data_de_assinatura = $this->regexAneel->capturaDataAssinatura($matches[0][0]);
-        $data_de_publicacao = $this->regexAneel->capturaDataPublicacao($matches[0][0]);
-        $ementa = $this->regexAneel->capturaEmenta($matches[0][0]);
-        $orgao_de_origem = $this->regexAneel->capturaOrgaoDeOriem($matches[0][0]);
-        $esfera = $this->regexAneel->capturaEsfera($matches[0][0]);
-        $situacao = $this->regexAneel->capturaSituacao($matches[0][0]);
-        $voto = $this->regexAneel->capturaVoto($matches[0][0]);
-        $texto_integral = $this->regexAneel->capturaTextoIntegral($matches[0][0]); // download
-        $nota_tecnica = $this->regexAneel->capturaNotaTecnica($matches[0][0]);
+        if($response->status == 200) {
 
-        $download_texto_integral = [];
-        $download_voto = [];
-        $download_nota_tecnica = [];
+            preg_match_all('/td_grid_ficha_background...(.*)/', $this->regexAneel->convert_str($response->content), $matches);
 
-        foreach ($norma as $key => $item ) {
+            $material = $this->regexAneel->capturaMaterial($matches[0][0]);
+            $norma = $this->regexAneel->capturaNorma($matches[0][0]);
+            $data_de_assinatura = $this->regexAneel->capturaDataAssinatura($matches[0][0]);
+            $data_de_publicacao = $this->regexAneel->capturaDataPublicacao($matches[0][0]);
+            $ementa = $this->regexAneel->capturaEmenta($matches[0][0]);
+            $orgao_de_origem = $this->regexAneel->capturaOrgaoDeOriem($matches[0][0]);
+            $esfera = $this->regexAneel->capturaEsfera($matches[0][0]);
+            $situacao = $this->regexAneel->capturaSituacao($matches[0][0]);
+            $voto = $this->regexAneel->capturaVoto($matches[0][0]);
+            $texto_integral = $this->regexAneel->capturaTextoIntegral($matches[0][0]); // download
+            $nota_tecnica = $this->regexAneel->capturaNotaTecnica($matches[0][0]);
 
-            if(isset($texto_integral[$key]['texto_integral'])) {
-                $results_download_integral = Curl::to($texto_integral[$key]['texto_integral'])
-                    ->withContentType('application/pdf')
-                    ->download('');
-                $download_texto_integral = $this->storageDirectory->saveDirectory('aneel/texto_integral', $texto_integral[$key]['name_arquivo'], $results_download_integral);
-            }else{
-                $download_texto_integral = array_merge($download_texto_integral,['vazio']);
+            $download_texto_integral = [];
+            $download_voto = [];
+            $download_nota_tecnica = [];
+
+            foreach ($norma as $key => $item) {
+
+                if (isset($texto_integral[$key]['texto_integral'])) {
+                    $results_download_integral = Curl::to($texto_integral[$key]['texto_integral'])
+                        ->withContentType('application/pdf')
+                        ->download('');
+                    $download_texto_integral = $this->storageDirectory->saveDirectory('aneel/texto_integral/'.$date_format.'/', $texto_integral[$key]['name_arquivo'], $results_download_integral);
+                } else {
+                    $download_texto_integral = array_merge($download_texto_integral, ['vazio']);
+                }
+                if (isset($voto[$key]['voto'])) {
+                    $results_download_voto = Curl::to($voto[$key]['voto'])
+                        ->withContentType('application/pdf')
+                        ->download('');
+                    $download_voto = $this->storageDirectory->saveDirectory('aneel/voto/'.$date_format.'/', $voto[$key]['name_arquivo'], $results_download_voto);
+                } else {
+                    $download_voto = array_merge($download_voto, ['vazio']);
+                }
+                if (isset($nota_tecnica[$key]['nota_tecnica'])) {
+                    $results_download_nota_tecnica = Curl::to($nota_tecnica[$key]['nota_tecnica'])
+                        ->withContentType('application/pdf')
+                        ->download('');
+                    $download_nota_tecnica = $this->storageDirectory->saveDirectory('aneel/nota_tecnica/'.$date_format.'/', $nota_tecnica[$key]['name_arquivo'], $results_download_nota_tecnica);
+                } else {
+                    $download_nota_tecnica = array_merge($download_nota_tecnica, ['vazio']);
+                }
             }
-            if(isset($voto[$key]['voto'])) {
-                $results_download_voto = Curl::to($voto[$key]['voto'])
-                    ->withContentType('application/pdf')
-                    ->download('');
-                $download_voto = $this->storageDirectory->saveDirectory('aneel/voto', $voto[$key]['name_arquivo'], $results_download_voto);
-            }else{
-                $download_voto = array_merge($download_voto,['vazio']);
+            foreach ($material as $key => $item) {
+                $results[$key] = [
+                    'url_arquivo_nota_tecnica' => $download_nota_tecnica[$key],
+                    'url_arquivo_voto' => $download_voto[$key],
+                    'url_arquivo_texto_integral' => $download_texto_integral[$key]
+                ];
+                $resultados[] = array_merge($material[$key], $norma[$key], $data_de_assinatura[$key], $data_de_publicacao[$key], $ementa[$key], $orgao_de_origem[$key], $esfera[$key], $situacao[$key], $results[$key]);
             }
-            if(isset($nota_tecnica[$key]['nota_tecnica'])) {
-                $results_download_nota_tecnica = Curl::to($nota_tecnica[$key]['nota_tecnica'])
-                    ->withContentType('application/pdf')
-                    ->download('');
-                $download_nota_tecnica = $this->storageDirectory->saveDirectory('aneel/nota_tecnica', $nota_tecnica[$key]['name_arquivo'], $results_download_nota_tecnica);
-            }else{
-                $download_nota_tecnica = array_merge($download_nota_tecnica,['vazio']);
+            // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
+
+            try {
+                if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
+
+                    $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', [$date_format => $resultados]);
+                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+
+                } else {
+                    // create a new collection
+                    $this->arangoDb->collection()->setName('aneel_proinfa');
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+                    // create a new documment
+                    $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', [$date_format => $resultados]);
+                    $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
+                }
+            } catch (ArangoConnectException $e) {
+                print 'Connection error: ' . $e->getMessage() . PHP_EOL;
+            } catch (ArangoClientException $e) {
+                print 'Client error: ' . $e->getMessage() . PHP_EOL;
+            } catch (ArangoServerException $e) {
+                print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
             }
-        }
-        foreach ($material as $key => $item)
-        {
-            $results[$key] = [
-                'url_arquivo_nota_tecnica' => $download_nota_tecnica[$key],
-                'url_arquivo_voto' => $download_voto[$key],
-                'url_arquivo_texto_integral' => $download_texto_integral[$key]
-            ];
-            $resultados[] = array_merge($material[$key],$norma[$key],$data_de_assinatura[$key],$data_de_publicacao[$key],$ementa[$key],$orgao_de_origem[$key],$esfera[$key],$situacao[$key],$results[$key]);
-        }
-        // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
-        try {
-            if ($this->arangoDb->collectionHandler()->has('aneel_proinfa')) {
+            return response()->json(
+                [
+                    'site' => 'www.biblioteca.aneel.gov.br',
+                    'palavra_chave' => 'conta desenvolvimento energetico',
+                    'responsabilidade' => 'O crawler pega todos os registros do site e realiza os downloads dos mesmos!',
+                    'status' => 'Crawler Aneel realizado com sucesso!'
+                ]
+            );
 
-                $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', $resultados);
-                $id = $this->arangoDb->documentHandler()->save('aneel_proinfa', $this->arangoDb->documment());
-
-            } else {
-                // create a new collection
-                $this->arangoDb->collection()->setName('aneel_proinfa');
-                $this->arangoDb->documment()->set('conta_desenvolvimento_energetico', $resultados);
-                $id = $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
-            }
-        }
-        catch (ArangoConnectException $e) {
-            print 'Connection error: ' . $e->getMessage() . PHP_EOL;
-        } catch (ArangoClientException $e) {
-            print 'Client error: ' . $e->getMessage() . PHP_EOL;
-        } catch (ArangoServerException $e) {
-            print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
-        }
-
-        return response()->json(
-            [
+        }else{
+            return response()->json([
                 'site' => 'www.biblioteca.aneel.gov.br',
-                'palavra_chave' => 'conta desenvolvimento energetico',
                 'responsabilidade' => 'O crawler pega todos os registros do site e realiza os downloads dos mesmos!',
-                'status' => 'Crawler Aneel realizado com sucesso!'
-            ]
-        );
-
-
+                'status' => 'O crawler não encontrou o arquivo especificado!'
+            ]);
+        }
 
 
     }

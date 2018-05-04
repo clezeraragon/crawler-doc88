@@ -28,7 +28,7 @@ class Curl
 //    const   CURLOPT_SSL_VERIFYHOST = 0;
 //    const   CURLOPT_SSL_VERIFYPEER = false;
 //    const   CURLOPT_VERBOSE = false;
-//    const   CURLOPT_HTTPHEADER = $header;
+//    const   CURLOPT_HTTPHEADER = '';
 //    const   CURLOPT_COOKIEFILE = "cookiefile";
 //    const   CURLOPT_COOKIEJAR = "cookiefile";
 
@@ -46,14 +46,12 @@ class Curl
         $header[] = "Pragma: "; // browsers keep this blank.
 
 
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
+        $this->options = array(
             CURLOPT_RETURNTRANSFER => true,          // retorna a página como string
             CURLOPT_HEADER         => false,         // não retorna headers
             CURLOPT_FOLLOWLOCATION => true,          // seguir Location: (redirects)
             CURLOPT_ENCODING       => "",            // handle all encodings
-            CURLOPT_USERAGENT      => "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",  // UserAgent do http
+            CURLOPT_USERAGENT      => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36",  // UserAgent do http
             CURLOPT_AUTOREFERER    => true,          // set referer on redirect
             CURLOPT_CONNECTTIMEOUT => 120,           // tempo de espera para conectar (2 minutos)
             CURLOPT_TIMEOUT        => 120,           // tempo de espera para executar (2 minutos)
@@ -63,9 +61,12 @@ class Curl
             CURLOPT_VERBOSE        => false,         // informações/logs
             CURLOPT_HTTPHEADER     => $header,       // headers do browser
             CURLOPT_COOKIEFILE     => "cookiefile",  // armazena os cookies
-            CURLOPT_COOKIEJAR      => "cookiefile"   // armazena os cookies
+            CURLOPT_COOKIEJAR      => "cookiefile",   // armazena os cookies
+            CURLINFO_HEADER_OUT    => false,
+        );
 
-        ));
+        $this->curl = curl_init();
+        curl_setopt_array($this->curl ,$this->options);
     }
 
     public function exeCurl($addOptions=null)
@@ -96,5 +97,10 @@ class Curl
     public function statuspageCurl()
     {
         return curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
+    }
+
+    public function returnHeaderOut()
+    {
+        return curl_getinfo($this->curl, CURLINFO_HEADER_OUT);
     }
 }

@@ -12,6 +12,7 @@
         "laravel/framework": "5.6.*",
         "laravel/tinker": "^1.0",
         "triagens/arangodb": "^3.3"
+
     },
     "require-dev": {
         "filp/whoops": "^2.0",
