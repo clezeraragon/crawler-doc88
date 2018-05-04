@@ -266,13 +266,20 @@ class AneelController extends Controller
     {
         $url_base_1 = "http://www.aneel.gov.br/audiencias-publicas?p_p_id=audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1&_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_situacao=1&_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_objetivo=conta de desenvolvimento energetico";
         $url_base_2 ="http://www.aneel.gov.br/audiencias-publicas?p_p_id=audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1";
-        $crawler_1 = $client->request('GET', $url_base_1, array('allow_redirects' => true));
+        $client->request('GET', $url_base_1, array('allow_redirects' => true));
         $get_response_site = $client->getResponse();
         $client->getCookieJar();
 
-        $crawler_2 = $client->request('POST', $url_base_2,array('allow_redirects' => true,'_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_objetivo' => 'conta de desenvolvimento energetico'));
+        $results = explode('<td class="table-cell only">',$get_response_site);
+        $div_array = array_slice($results,1);
 
-        var_dump($get_response_site);
+
+
+            $result_url =  $this->regexAneel->capturaAudiencia($div_array[0]);
+           $url_redirect =   $client->request('GET', $result_url,array('allow_redirects' => true));
+
+        $client->getCookieJar();
+        var_dump($url_redirect->html());
     }
 
 

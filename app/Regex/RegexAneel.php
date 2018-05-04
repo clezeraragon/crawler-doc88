@@ -66,7 +66,7 @@ class RegexAneel extends AbstractRegex
                 'name_arquivo' => trim($name_arquivo['texto_integral'])
             ];
         }
-      return $resultados;
+        return $resultados;
     }
     public function capturaVoto($page_acesso)
     {
@@ -101,6 +101,12 @@ class RegexAneel extends AbstractRegex
     function tratarImput($dado)
     {
         return str_replace(" ", "+", $dado);
+    }
+    // Pegar audiência
+    public function capturaAudiencia($page_acesso)
+    {
+        $regex = '/href..(.*)"\>/';
+        return $this->regexFirst($regex, $page_acesso);
     }
 
 }
