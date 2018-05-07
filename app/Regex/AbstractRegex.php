@@ -104,6 +104,18 @@ abstract class AbstractRegex
 
         return $data;
     }
+    public function formataDataBr($data_hora) {
+
+        $data = NULL;
+
+        $date = DateTime::createFromFormat('d/m/Y', $data_hora);
+
+        if ($date) {
+            $data = $date->format('d-m-Y');
+        }
+
+        return $data;
+    }
 
     public function formataValor($val) {
         //25.305.480,1600

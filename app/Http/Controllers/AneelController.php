@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Crawler\Model\ArangoDb;
 use Crawler\Regex\RegexAneel;
 use Crawler\StorageDirectory\StorageDirectory;
+use Crawler\Util\Util;
 use http\Env\Response;
 use Illuminate\Http\Request;
 use Ixudra\Curl\Facades\Curl;
@@ -264,22 +265,71 @@ class AneelController extends Controller
     }
     public function cdeAudiencia( Client $client)
     {
+        $date_format = Util::getDateIso();
+
         $url_base_1 = "http://www.aneel.gov.br/audiencias-publicas?p_p_id=audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1&_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_situacao=1&_audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet_objetivo=conta de desenvolvimento energetico";
         $url_base_2 ="http://www.aneel.gov.br/audiencias-publicas?p_p_id=audienciaspublicasvisualizacao_WAR_AudienciasConsultasPortletportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1";
         $client->request('GET', $url_base_1, array('allow_redirects' => true));
         $get_response_site = $client->getResponse();
         $client->getCookieJar();
 
-        $results = explode('<td class="table-cell only">',$get_response_site);
-        $div_array = array_slice($results,1);
+        if($get_response_site->getStatus() == 200)
+        {
+
+            $results = explode('<td class="table-cell only">', $get_response_site);
+            $div_array = array_slice($results, 1);
 
 
+            $result_url = $this->regexAneel->capturaAudiencia($div_array[0]);
+            $url_redirect = $client->request('GET', $result_url, array('allow_redirects' => true));
+            $nota_tecnica_link_download = $this->regexAneel->capturaResultados($url_redirect->html());
+            $get_data_de_contribuicao = $this->regexAneel->capturaDataDeContribuicao($url_redirect->html());
 
-            $result_url =  $this->regexAneel->capturaAudiencia($div_array[0]);
-           $url_redirect =   $client->request('GET', $result_url,array('allow_redirects' => true));
+            $client->request('GET',$nota_tecnica_link_download);
 
-        $client->getCookieJar();
-        var_dump($url_redirect->html());
+
+            $download_nota_tecnica = $this->storageDirectory->saveDirectory('aneel/audiencia_publicas/nota_tecnica/'.$date_format.'/', 'audiencias-publicas_'.$get_data_de_contribuicao.'.pdf', $client->getResponse());
+
+            // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
+
+            try {
+                if ($this->arangoDb->collectionHandler()->has('aneel')) {
+
+                    $this->arangoDb->documment()->set('audiencia_publicas', [$date_format => $download_nota_tecnica]);
+                    $this->arangoDb->documentHandler()->save('aneel', $this->arangoDb->documment());
+
+                } else {
+                    // create a new collection
+                    $this->arangoDb->collection()->setName('aneel');
+                    $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
+                    // create a new documment
+                    $this->arangoDb->documment()->set('audiencia_publicas', [$date_format => $download_nota_tecnica]);
+                    $this->arangoDb->documentHandler()->save('aneel', $this->arangoDb->documment());
+                }
+            } catch (ArangoConnectException $e) {
+                print 'Connection error: ' . $e->getMessage() . PHP_EOL;
+            } catch (ArangoClientException $e) {
+                print 'Client error: ' . $e->getMessage() . PHP_EOL;
+            } catch (ArangoServerException $e) {
+                print 'Server error: ' . $e->getServerCode() . ':' . $e->getServerMessage() . ' ' . $e->getMessage() . PHP_EOL;
+            }
+
+            return response()->json(
+                [
+                    'site' => 'http://www.aneel.gov.br/audiencias-publicas',
+                    'palavra_chave' => 'conta desenvolvimento energetico aba encerrados',
+                    'responsabilidade' => 'O crawler realiza o download do arquivo nota tecnica!',
+                    'status' => 'Crawler Aneel realizado com sucesso!'
+                ]
+            );
+
+        }else{
+            return response()->json([
+                'site' => 'http://www.aneel.gov.br/audiencias-publicas',
+                'responsabilidade' => 'O crawler realiza o download do arquivo nota tecnica!',
+                'status' => 'O crawler não encontrou o arquivo especificado!'
+            ]);
+        }
     }
 
 

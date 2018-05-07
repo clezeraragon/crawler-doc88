@@ -4,6 +4,7 @@ namespace Crawler\Http\Controllers;
 
 use Crawler\Regex\RegexCceeInfoMercadoGeral;
 use Crawler\StorageDirectory\StorageDirectory;
+use Crawler\Util\Util;
 use Goutte\Client;
 use Carbon\Carbon;
 use Crawler\Model\ArangoDb;
@@ -111,7 +112,7 @@ class CceeController extends Controller
             $sul = [];
             $nordeste = [];
             $norte = [];
-            $date = date('Y-m-d');
+            $date = Util::getDateIso();
 
             foreach ($results as $result) {
                 /** Sudeste/centro-Oeste */

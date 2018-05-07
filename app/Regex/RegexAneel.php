@@ -106,7 +106,29 @@ class RegexAneel extends AbstractRegex
     public function capturaAudiencia($page_acesso)
     {
         $regex = '/href..(.*)"\>/';
-        return $this->regexFirst($regex, $page_acesso);
+        $result = $this->regexFirst($regex, $page_acesso);
+
+        return $this->pregReplaceString('amp;','',$result);
+    }
+    public function capturaResultados($page_acesso)
+    {
+        $regex = '/Resultados[^>]+>[^>]+>[^>]+>[^>]+href..(.*?downloadAnyFile)/';
+        $result = $this->regexFirst($regex, $page_acesso);
+        return $this->pregReplaceString('amp;','',$result);
+    }
+    public function capturaDataDeContribuicao($page_acesso)
+    {
+        //De 01/11/2017 a 30/11/2017
+
+        $regex = '/periodo-contribuicao-data[^>]+>[^>]+>(.*?[0-9]{4})/';
+        $de =  $this->formataDataBr($this->regexFirst($regex, $page_acesso));
+
+        $regex = '/periodo-contribuicao-data[^>]+>[^>]+>[^>]+>[^>]+>(.*?[0-9]{4})/';
+        $ate =  $this->formataDataBr($this->regexFirst($regex, $page_acesso));
+
+        return $de.'_a_'.$ate;
+
+
     }
 
 }
