@@ -198,7 +198,7 @@ class OnsController extends Controller
                 ->withContentType('application/xlsx')
                 ->download('');
 
-            $url_download[$date_format]['url_download_mlt_semanal'] = $this->storageDirectory->saveDirectory('ons/mlt/semanal/' . $date_format . '/', $captura_name, $results_download);
+            $url_download[$date_format]['url_download_mlt_semanal'] = $this->storageDirectory->saveDirectory('ons/mlt/diario/' . $date_format . '/', $captura_name, $results_download);
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
