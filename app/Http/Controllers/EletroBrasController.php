@@ -3,6 +3,8 @@
 namespace Crawler\Http\Controllers;
 
 use Carbon\Carbon;
+use Crawler\Regex\RegexEletrobras;
+use Crawler\Util\Util;
 use Illuminate\Http\Request;
 use Crawler\StorageDirectory\StorageDirectory;
 use Ixudra\Curl\Facades\Curl;
@@ -15,34 +17,47 @@ class EletroBrasController extends Controller
 {
     private $storageDirectory;
     private $arangoDb;
+    private $regexEletrobras;
 
 
-    public function __construct(StorageDirectory $storageDirectory, ArangoDb $arangoDb)
+    public function __construct(StorageDirectory $storageDirectory, ArangoDb $arangoDb, RegexEletrobras $regexEletrobras)
     {
         $this->storageDirectory = $storageDirectory;
         $this->arangoDb = $arangoDb;
+        $this->regexEletrobras = $regexEletrobras;
     }
 
     public function getCde()
     {
         $carbon = Carbon::now();
         $ano = $carbon->year;
+        $url_base = 'http://eletrobras.com';
 
-        $url = 'http://eletrobras.com/pt/FundosSetoriaisCDE/CDE%20-%20Movimenta%C3%A7%C3%A3o%20Financeira%20-%20' . '2017' . '.xls';
+        $url = $url_base.'/pt/FundosSetoriaisCDE/Forms/AllItems.aspx';
         $response = Curl::to($url)
             ->returnResponseObject()
-            ->withContentType('application/xls')
+            ->setCookieFile('down')
+            ->get();
+
+        $url_movimentacao = $this->regexEletrobras->capturaUrlMovimentacao($response->content);
+        $mount_url_dowload = $url_base.$url_movimentacao;
+
+        $url_download = Curl::to($mount_url_dowload)
+            ->setCookieFile('down')
+            ->allowRedirect(true)
+            ->withContentType('application/xlsx')
             ->download('');
+
 
         if ($response->status == 200) {
 
-            $resultado = $this->storageDirectory->saveDirectory('eletrobras/'.$ano.'/', 'CDE-'.$ano.'-Movimentação_Finaceira.xlsx', $response);
+            $resultado = $this->storageDirectory->saveDirectory('eletrobras/'.$ano.'/', 'CDE-'.$ano.'-Movimentação_Finaceira.xlsx', $url_download);
 
 
             try {
                 if ($this->arangoDb->collectionHandler()->has('eletrobras')) {
 
-                    $this->arangoDb->documment()->set('cde', $resultado);
+                    $this->arangoDb->documment()->set('cde', [Util::getDateIso() => $resultado]);
                     $this->arangoDb->documentHandler()->save('eletrobras', $this->arangoDb->documment());
 
                 } else {
@@ -51,7 +66,7 @@ class EletroBrasController extends Controller
                     $this->arangoDb->collection()->setName('eletrobras');
                     $this->arangoDb->collectionHandler()->create($this->arangoDb->collection());
 
-                    $this->arangoDb->documment()->set('cde', $resultado);
+                    $this->arangoDb->documment()->set('cde', [Util::getDateIso() => $resultado]);
                     $this->arangoDb->documentHandler()->save('eletrobras', $this->arangoDb->documment());
                 }
             } catch (ArangoConnectException $e) {

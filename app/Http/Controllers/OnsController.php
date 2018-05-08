@@ -67,7 +67,7 @@ class OnsController extends Controller
             $results_download = Curl::to($url_base . $data_de_ate . $url_download_xls)
                 ->withContentType('application/xlsx')
                 ->download('');
-            $url_download['url_download_semanal'] = $this->storageDirectory->saveDirectory('ons/semanal/' . $date_format . '/', $url_download_xls_name, $results_download);
+            $url_download[$date_format]['url_download_semanal'] = $this->storageDirectory->saveDirectory('ons/semanal/' . $date_format . '/', $url_download_xls_name, $results_download);
 
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
@@ -133,7 +133,7 @@ class OnsController extends Controller
                 ->withContentType('application/xlsx')
                 ->download('');
 
-            $url_download['url_download_sdro'] = $this->storageDirectory->saveDirectory('ons/diaria/' . $date_format . '/', $url_download_xls_name, $results_download);
+            $url_download[$date_format]['url_download_sdro'] = $this->storageDirectory->saveDirectory('ons/diaria/' . $date_format . '/', $url_download_xls_name, $results_download);
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {
@@ -198,7 +198,7 @@ class OnsController extends Controller
                 ->withContentType('application/xlsx')
                 ->download('');
 
-            $url_download['url_download_mlt_semanal'] = $this->storageDirectory->saveDirectory('ons/mlt/semanal/' . $date_format . '/', $captura_name, $results_download);
+            $url_download[$date_format]['url_download_mlt_semanal'] = $this->storageDirectory->saveDirectory('ons/mlt/semanal/' . $date_format . '/', $captura_name, $results_download);
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
 
             try {

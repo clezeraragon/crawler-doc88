@@ -51,12 +51,14 @@ class CceeController extends Controller
 
 
         foreach ($results as $result) {
-            $mes = $this->regexCceePldMensal->capturaMes($result);
+            $mes_ano = $this->regexCceePldMensal->capturaMes($result);
         }
+
+         $ano_mes = Util::getMesAno($mes_ano);
 
         foreach ($results as $result)
         {
-            $atual['Mensal'][$mes]= [
+            $atual['Mensal'][$ano_mes]= [
                 'Sudeste_Centro-oeste' => $this->regexCceePldMensal->capturaSeCo($result),
                 'Sul' => $this->regexCceePldMensal->capturaS($result),
                 'Nordeste' => $this->regexCceePldMensal->capturaNe($result),

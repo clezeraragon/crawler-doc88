@@ -41,3 +41,4 @@ Route::prefix('ccee')->group(function () {
 
 Route::get('/cde-eletrobras', 'EletroBrasController@getCde')->name('cde-eletrobras');
 Route::get('/epe-consumo', 'EpeConsumoController@getConsumo')->name('epe-consumo');
+

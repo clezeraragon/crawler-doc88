@@ -34,5 +34,11 @@ class Util
         }
 
     }
+    public static function getMesAno($mes_ano)
+    {
+      $date = Carbon::createFromFormat('m/Y',$mes_ano);
+
+      return $date->format('Y-m');
+    }
 
 }
