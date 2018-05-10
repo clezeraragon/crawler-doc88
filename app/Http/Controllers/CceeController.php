@@ -2,6 +2,7 @@
 
 namespace Crawler\Http\Controllers;
 
+use Crawler\Excel\ImportExcel;
 use Crawler\Regex\RegexCceeInfoMercadoGeral;
 use Crawler\StorageDirectory\StorageDirectory;
 use Crawler\Util\Util;
@@ -24,12 +25,14 @@ class CceeController extends Controller
     private $arangoDb;
     private $regexCceeInfoMercadoGeral;
     private $regexCceePldMensal;
+    private $importExcel;
 
     public function __construct(StorageDirectory $storageDirectory,
                                 Client $client,
                                 RegexCceePldSemanal $regexCceePldSemanal,
                                 RegexCceePldMensal $regexCceePldMensal,
                                 RegexCceeInfoMercadoGeral $regexCceeInfoMercadoGeral,
+                                ImportExcel $importExcel,
                                 ArangoDb $arangoDb)
     {
         $this->storageDirectory = $storageDirectory;
@@ -38,6 +41,7 @@ class CceeController extends Controller
         $this->regexCceePldMensal = $regexCceePldMensal;
         $this->arangoDb = $arangoDb;
         $this->regexCceeInfoMercadoGeral = $regexCceeInfoMercadoGeral;
+        $this->importExcel = $importExcel;
     }
     public function historicoPrecoMensal()
     {
@@ -214,6 +218,8 @@ class CceeController extends Controller
     }
     public function getInfoMercadoGeralAndIndividual()
     {
+        $this->importExcel->consumoAneel(storage_path('app').'/ccee/mensal/geral/2018-04-30/teste.ods');die;
+
         $carbon = Carbon::now();
         $date = $carbon->format('Y-m-d');
 
