@@ -8,12 +8,15 @@
 
 namespace Crawler\Excel;
 
+use Carbon\Carbon;
 use Maatwebsite\Excel\Excel;
 
 class ImportExcel
 {
     private $excel;
     private $startRow;
+
+    // Dados InfoMercad
 
     public function __construct(Excel $excel)
     {
@@ -25,41 +28,87 @@ class ImportExcel
         return $this->startRow = config(['excel.import.startRow'=> $row]);
     }
 
-    public function consumoAneel($objeto)
+    public function consumoAneel($file, $sheet, $startRow, $takeRows, $date)
     {
-//      $results =  $this->excel->load($objeto)->get();
+        $data = [];
+        $oldSubmercado = '';
+        $oldSemana = '';
+        $oldPatamar = '';
+        $year = $date->year;
+        $this->setConfigStartRow($startRow);
+        $months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        $daysInMonths = [
+            'Janeiro' => 31,
+            'Fevereiro' => Carbon::createFromFormat('m/Y', '02/' . $year)->daysInMonth,
+            'Março' => 31,
+            'Abril' => 30,
+            'Maio' => 31,
+            'Junho' => 30,
+            'Julho' => 31,
+            'Agosto' => 31,
+            'Setembro' => 30,
+            'Outubro' => 31,
+            'Novembro' => 30,
+            'Dezembro' => 31
+        ];
 
-//        $results = $this->excel->selectSheets('003 Consumo')->load($objeto)->get
-        $this->setConfigStartRow(2);
-      $teste =  \Excel::selectSheetsByIndex(0)->load($objeto, function($reader) {
-//           $reader->skipColumns(1);
-//           $reader->get();
+        \Excel::selectSheetsByIndex($sheet)
+            ->load($file, function($reader) use ($takeRows) {
+                $reader->takeRows($takeRows);
+            })
+            ->get()
+            ->each(function($i, $k) use (&$data, &$oldSubmercado, &$oldSemana, &$oldPatamar, &$date, $months, $daysInMonths) {
+                $rowData = $i->all();
+                if (
+                    $k === 0 &&
+                    (
+                        empty($rowData['submercado']) ||
+                        empty($rowData['no_semana']) ||
+                        empty($rowData['patamar'])
+                    )
+                ) {
+                    throw new \Exception('O primeiro item não pode estar com o submercado, semana ou patamar vazio');
+                } else {
+                    unset($rowData[0]);
+                    $submercado = ! empty($rowData['submercado']) ? $rowData['submercado'] : $oldSubmercado;
+                    $semana = ! empty($rowData['no_semana']) ? $rowData['no_semana'] : $oldSemana;
+                    $patamar = ! empty($rowData['patamar']) ? $rowData['patamar'] : $oldPatamar;
+                    unset($rowData['submercado']);
+                    unset($rowData['no_semana']);
+                    unset($rowData['patamar']);
 
-        })->get();
+                    $arr = array_combine($months, $rowData);
+                    $arrPatamar = [];
+                    array_walk($arr, function($value, $key) use ($date, $daysInMonths, &$arrPatamar) {
+                        $total = $value;
+                        if (! is_null($value)) {
+                            $total = round($value * 24 * $daysInMonths[$key], 2);
+                        }
 
-      dump($teste);
-         die;
+                        $arrPatamar[$key] = $total;
+                    });
 
-         dump($results->skipRows(14)->takeRows(73)->skipColumns(1)->takeColumns(15));die;
+                    if (isset($data[$submercado][$semana])) {
+                        $data[$submercado][$semana][$patamar] = $arrPatamar;
+                    } elseif (isset($data[$submercado])) {
+                        $data[$submercado][$semana] = [
+                            $patamar => $arrPatamar
+                        ];
+                    } else {
+                        $data[$submercado] = [
+                            $semana => [
+                                $patamar => $arrPatamar
+                            ]
+                        ];
+                    }
 
-        foreach ($results as $key => $result)
-        {
+                    $oldSubmercado = $submercado;
+                    $oldSemana = $semana;
+                    $oldPatamar = $patamar;
+                }
+            });
 
-//            if($result->getTitle() == '003 Consumo')
-//            {
-//              $result->each(function ($row)
-//              {
-                 dump($result);
-//              });
-//            }
-
-            {
-
-            }
-        }
-
-
-
+        return $data;
     }
-
 }
