@@ -218,8 +218,6 @@ class CceeController extends Controller
     }
     public function getInfoMercadoGeralAndIndividual()
     {
-        $this->importExcel->consumoAneel(storage_path('app').'/ccee/mensal/geral/2018-04-30/teste.ods');die;
-
         $carbon = Carbon::now();
         $date = $carbon->format('Y-m-d');
 
@@ -257,7 +255,18 @@ class CceeController extends Controller
                     ->withContentType('application/xlsx')
                     ->download('');
                 if($key == 'geral') {
-                    $resultado['geral'][$date] = $this->storageDirectory->saveDirectory('ccee/mensal/'.$key.'/' . $date . '/', 'InfoMercado_Dados_Gerais.xlsx', $result_download);
+                    $resultado['geral'][$date]['file'] = $this->storageDirectory->saveDirectory('ccee/mensal/'.$key.'/' . $date . '/', 'InfoMercado_Dados_Gerais.xlsx', $result_download);
+                    // Importação dos dados da planilha
+                    $sheet = 5; // 003 Consumo
+                    $startRow = 15;
+                    $takeRows = 86;
+                    $resultado['geral'][$date]['data'] = $this->importExcel->consumoAneel(
+                        storage_path('app') . '/' . $resultado['geral'][$date]['file'][0],
+                        $sheet,
+                        $startRow,
+                        $takeRows,
+                        $carbon
+                    );
                 }else{
                     $resultado['individual'][$date] = $this->storageDirectory->saveDirectory('ccee/mensal/'.$key.'/' . $date . '/', 'InfoMercado_Dados_Individuais.xlsx', $result_download);
                 }
