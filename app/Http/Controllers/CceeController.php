@@ -254,6 +254,7 @@ class CceeController extends Controller
                     ->allowRedirect(true)
                     ->withContentType('application/xlsx')
                     ->download('');
+
                 if($key == 'geral') {
                     $resultado['geral'][$date]['file'] = $this->storageDirectory->saveDirectory('ccee/mensal/'.$key.'/' . $date . '/', 'InfoMercado_Dados_Gerais.xlsx', $result_download);
                     // Importação dos dados da planilha

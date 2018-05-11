@@ -83,7 +83,9 @@ class ImportExcel
                     array_walk($arr, function($value, $key) use ($date, $daysInMonths, &$arrPatamar) {
                         $total = $value;
                         if (! is_null($value)) {
-                            $total = round($value * 24 * $daysInMonths[$key], 2);
+                            $total_round = round($value * 24 * $daysInMonths[$key], 3);
+                            $total = number_format($total_round,3,",",".");
+
                         }
 
                         $arrPatamar[$key] = $total;
