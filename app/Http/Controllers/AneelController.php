@@ -287,7 +287,6 @@ class AneelController extends Controller
 
             $client->request('GET',$nota_tecnica_link_download);
 
-
             $download_nota_tecnica = $this->storageDirectory->saveDirectory('aneel/audiencia_publicas/nota_tecnica/'.$date_format.'/', 'audiencias-publicas_'.$get_data_de_contribuicao.'.pdf', $client->getResponse());
 
             // ------------------------------------------------------------------------Crud--------------------------------------------------------------------------------------------------
